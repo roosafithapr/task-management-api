@@ -5,27 +5,35 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Task;
+use App\Http\Requests\TaskRequest;
+use App\Http\Resources\TaskResource;
+use App\Http\Resources\ErrorResource;
 
 class TaskController extends Controller
 {
-    public function createTask(Request $request)
+    public function createTask(TaskRequest $request)
     {
-        // Validate request
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'status' => 'required|in:pending,in-progress,completed',
-            'due_date' => 'nullable|date',
-            'user_id' => 'required|exists:users,id',
-        ]);
+        $validated = $request->validated();
         // Ensure user exists
         $user = User::find($validated['user_id']);
         if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
+            return (new ErrorResource([
+                'error' => 'User not found',
+                ]))
+                ->response()
+                ->setStatusCode(404);
         }
         $task = Task::create($validated);
-        return response()->json(
-            ['message' => 'Task created successfully', 'task' => $task], 201);
+
+        // return response()->json(
+        //     ['message' => 'Task created successfully', 'task' => $task], 201);
+
+        return (new TaskResource($task))
+        ->additional([
+            'message' => 'Task created successfully',
+        ])
+        ->response()
+        ->setStatusCode(201);
     }
 
     public function filteredTask(Request $request)
@@ -45,11 +53,22 @@ class TaskController extends Controller
         $tasks = $query->get();
 
         if ($tasks->isEmpty()) {
-            return response()->json(['message' => 'No tasks found'], 404);
+            return (new ErrorResource([
+                'error' => 'No tasks found',
+                ]))
+                ->response()
+                ->setStatusCode(404);
         }
 
-        return response()->json(
-            ['messages' => 'Filtered Tasks', 'task' => $tasks], 201);
+        // return response()->json(
+        //     ['messages' => 'Filtered Tasks', 'task' => $tasks], 201);
+
+        return TaskResource::collection($tasks)
+        ->additional([
+            'message' => 'Filtered Tasks',
+        ])
+        ->response()
+        ->setStatusCode(201);
     }
 
     public function showTask($id)
@@ -57,39 +76,60 @@ class TaskController extends Controller
         $task = Task::find($id);
 
         if (!$task) {
-            return response()->json(['error' => 'Task not found'], 404);
+            return (new ErrorResource([
+                'error' => 'No tasks found',
+                ]))
+                ->response()
+                ->setStatusCode(404);
         }
 
-        return response()->json([
+        // return response()->json([
+        //     'message' => 'Task retrieved successfully',
+        //     'data' => $task,
+        //  ],200);
+
+        return (new TaskResource($task))
+        ->additional([
             'message' => 'Task retrieved successfully',
-            'data' => $task,
-         ],200);
+        ])
+        ->response()
+        ->setStatusCode(200);
     }
-    public function updateTask(Request $request, $id)
+    public function updateTask(TaskRequest $request, $id)
     {
         $task = Task::find($id);
 
         if (!$task) {
-            return response()->json(['error' => 'Task not found'], 404);
+            return (new ErrorResource([
+                'error' => 'No tasks found',
+                ]))
+                ->response()
+                ->setStatusCode(404);
         }
 
-        $validated = $request->validate([
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'nullable|in:pending,in-progress,completed',
-            'due_date' => 'nullable|date',
-        ]);
+        $validated = $request->validated();
 
         $task->update($validated);
 
-        return response()->json(['message' => 'Task updated successfully', 'task' => $task], 200);
+        // return response()->json(['message' => 'Task updated successfully', 'task' => $task], 200);
+
+        return (new TaskResource($task))
+        ->additional([
+            'message' => 'Task updated successfully',
+        ])
+        ->response()
+        ->setStatusCode(200);
     }
     public function deleteTask($id)
     {
         $task = Task::find($id);
 
         if (!$task) {
-            return response()->json(['error' => 'Task not found'], 404);
+            return (new ErrorResource([
+                'error' => 'No tasks found',
+                ]))
+                ->response()
+                ->setStatusCode(404);
         }
 
         $task->delete();

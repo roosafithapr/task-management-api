@@ -22,7 +22,9 @@ use App\Http\Controllers\ReportController;
 // });
 
 Route::post('/users', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+//Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('check.login.limit');
+
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{id}', [UserController::class, 'showUser']);
@@ -35,4 +37,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/tasks/{id}', [TaskController::class, 'deleteTask']);
     Route::get('/reports/task-summary', [ReportController::class, 'taskSummary']);
     Route::get('/reports/user-tasks/{user_id}', [ReportController::class, 'userTasks']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 });
