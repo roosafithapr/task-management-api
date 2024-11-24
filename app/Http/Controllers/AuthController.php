@@ -67,7 +67,7 @@ class AuthController extends Controller
         // ],200);
 
         $token = $user->createToken('api_token');
-        $token->accessToken->expires_at = now()->addHours(2); // Set expiration to 1 hour
+        $token->accessToken->expires_at = now()->addHours(2); // Set expiration to 1 hour,can be done in sanctum file expiration
         $token->accessToken->save();
 
         $tokenDetails = (object)[
